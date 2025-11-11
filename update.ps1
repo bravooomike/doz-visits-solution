@@ -122,7 +122,7 @@ $diffList = @()
 if (Test-Path $srcPath) {
   $diffList = & git -c core.autocrlf=false -c core.safecrlf=false diff --no-index --name-only -- $srcPath $tmpPath 2>$null
 } else {
-  $diffList = @("**/*") # wymusi wejście w ścieżkę „pierwsze wgranie”
+  $diffList = @("**/*")
 }
 
 # Filtry „szumu” (Canvas itp.) – całe pliki, nie linie
@@ -137,7 +137,6 @@ $NoisePatterns = @(
 $realDiff = @()
 foreach ($f in $diffList) {
   $rel = $f
-  # Ujednolicenie separatorów
   $rel = $rel -replace [regex]::Escape((Get-Location).Path), ''
   $rel = $rel.TrimStart('\','/')
   $isNoise = $false
@@ -153,8 +152,13 @@ if (-not $realDiff -or $realDiff.Count -eq 0) {
   exit 0
 }
 
-# 3) (Opcjonalnie) bump wersji – na TMP (bo za chwilę TMP wlejemy do SRC)
-$newVersion = $null
+# 3) Auto/explicit version bump – bumpujemy w TMP (bo za chwilę TMP wlejemy do SRC)
+# Jeśli są realne różnice i nie podano -VersionBump → automatycznie podbij PATCH
+if ($VersionBump -eq "none" -and $realDiff -and $realDiff.Count -gt 0) {
+  $VersionBump = "patch"
+}
+
+$newVersion = $exportedVersion
 if ($VersionBump -ne "none") {
   $newVersion = Bump-SemVer -version $exportedVersion -bump $VersionBump -prerelease $Prerelease
   if ($newVersion -ne $exportedVersion) {
@@ -162,15 +166,12 @@ if ($VersionBump -ne "none") {
     $tmpVersionNode.InnerText = $newVersion
     $tmpXml.Save($tmpSolutionXml)
   } else {
-    $newVersion = $exportedVersion
+    Info "Version unchanged ($exportedVersion)."
   }
-} else {
-  $newVersion = $exportedVersion
 }
 
 # 4) Skoro są różnice – podmień SRC zawartością TMP
 Info "Sync TMP -> SRC"
-# Robocopy jest stabilne na Windows do mirrorowania
 robocopy $tmpPath $srcPath /MIR /NFL /NDL /NJH /NJS | Out-Null
 
 # 5) Sprzątanie ZIP & TMP
