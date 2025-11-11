@@ -88,21 +88,29 @@ function Get-SolutionXmlPath([string]$baseFolder) {
   if ($candidates.Count -eq 0) { Fail "Solution.xml not found after unpack." }
   return ($candidates | Select-Object -First 1).FullName
 }
+
+# >>> CHANGED: 4-segment Dataverse versioning (major.minor.build.revision)
 function Bump-SemVer {
   param([string]$version, [string]$bump, [string]$prerelease)
+
   $base = $version.Split("-")[0]
-  $parts = $base.Split(".")
-  [int]$maj = $parts[0]; [int]$min = $parts[1]; [int]$pat = $parts[2]
+  $parts = ($base.Split(".") | ForEach-Object { [int]$_ })
+  while ($parts.Count -lt 4) { $parts += 0 }   # pad to 4 segments
+
+  $maj = $parts[0]; $min = $parts[1]; $bld = $parts[2]; $rev = $parts[3]
+
   switch ($bump) {
-    "major" { $maj++; $min=0; $pat=0 }
-    "minor" { $min++; $pat=0 }
-    "patch" { $pat++ }
-    default { }
+    "major" { $maj++; $min=0; $bld=0; $rev=0 }
+    "minor" { $min++; $bld=0; $rev=0 }
+    "patch" { $rev++ }                         # increment LAST segment
+    default  { }                               # "none"
   }
-  $new = "$maj.$min.$pat"
+
+  $new = "$maj.$min.$bld.$rev"
   if ($prerelease) { $new = "$new-$prerelease" }
   return $new
 }
+# <<< CHANGED
 
 # Read version from TMP (aktualny eksport)
 $tmpSolutionXml = Get-SolutionXmlPath $tmpPath

@@ -6,7 +6,7 @@
       <LocalizedName description="DOZ Visits" languagecode="1033" />
     </LocalizedNames>
     <Descriptions />
-    <Version>1.0.1</Version>
+    <Version>1.0.0.4</Version>
     <Managed>0</Managed>
     <Publisher>
       <UniqueName>DOZ</UniqueName>
