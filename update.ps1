@@ -4,15 +4,26 @@
   What it does:
     1) Export solution from environment
     2) Unpack to /src (text-based sources)
-    3) Auto-bump version in Solution.xml (SemVer)
+    3) Optionally bump version in Solution.xml (SemVer)
     4) Remove temporary solution.zip
     5) git add/commit/push (optional git tag)
-
+  
   Usage examples:
-    .\update.ps1 -SolutionName DOZVisits -Message "fix: header spacing"
-    .\update.ps1 -SolutionName DOZVisits -Message "feat: add search" -VersionBump minor
-    .\update.ps1 -SolutionName DOZVisits -Message "hotfix: patch" -Prerelease "rc.1" -Tag
-    .\update.ps1 -SolutionName DOZVisits -Message "release: managed export" -Managed
+
+  1) Standard snapshot export (no version bump):
+     Only commits if the solution actually changed. New version will be created.
+     
+     .\update.ps1 -SolutionName DOZVisits -Message "fix: corrected validation"
+
+  2) Force version bump even if no functional changes were made:
+     Useful when preparing a release or marking milestone progress. Nothing will be commited, no new version.
+     
+     .\update.ps1 -SolutionName DOZVisits -Message "release: prepare" -VersionBump patch
+
+  3) Solution changes + intentional version progression:
+     For feature work or backward-incompatible updates. New version will be done eventhough there is no changes in solution.
+     
+     .\update.ps1 -SolutionName DOZVisits -Message "feat: bulk operations" -VersionBump minor
 #>
 
 param(
@@ -24,8 +35,9 @@ param(
 
   [string]$EnvUrl,
 
-  [ValidateSet("patch","minor","major")]
-  [string]$VersionBump = "patch",
+  # ⬇️ Change: add 'none' and make it default to avoid empty version-only commits
+  [ValidateSet("none","patch","minor","major")]
+  [string]$VersionBump = "none",
 
   [string]$Prerelease,          # e.g., "rc.1" → 1.2.3-rc.1
   [switch]$Tag,                 # create annotated git tag "vX.Y.Z[-pre]"
@@ -50,7 +62,7 @@ if ($EnvUrl) {
   pac auth create --environment $EnvUrl --deviceCode | Out-Null
 }
 
-# Check active PAC auth robustly (language-agnostic)
+# Robust auth check
 $null = & pac org who 2>$null
 if ($LASTEXITCODE -ne 0) {
   Fail "No active PAC auth. Run: pac auth create --environment <url> --deviceCode"
@@ -67,7 +79,7 @@ $srcPath = Join-Path (Get-Location) "src"
 Info "Unpacking to $srcPath (allowDelete=true)"
 pac solution unpack --zipFile $zipPath --folder $srcPath --allowDelete true
 
-# 3) Bump version in Solution.xml (SemVer)
+# Helper: locate Solution.xml for potential bump
 function Get-SolutionXmlPath {
   $candidates = Get-ChildItem -Path $srcPath -Filter "Solution.xml" -Recurse -File -ErrorAction SilentlyContinue
   if ($candidates.Count -eq 0) { Fail "Solution.xml not found under $srcPath. Unpack result unexpected." }
@@ -76,7 +88,6 @@ function Get-SolutionXmlPath {
 
 function Bump-SemVer {
   param([string]$version, [string]$bump, [string]$prerelease)
-  # Accept "1.2.3" or "1.2.3-xxx"; ignore existing prerelease for bumping
   $base = $version.Split("-")[0]
   $parts = $base.Split(".")
   if ($parts.Count -lt 3) { Fail "Invalid solution version '$version'. Expected MAJOR.MINOR.PATCH." }
@@ -85,44 +96,72 @@ function Bump-SemVer {
     "major" { $maj++; $min=0; $pat=0 }
     "minor" { $min++; $pat=0 }
     "patch" { $pat++ }
+    default  { } # none
   }
   $new = "$maj.$min.$pat"
+  if ($bump -eq "none") { $new = "$maj.$min.$pat" }
   if ($prerelease) { $new = "$new-$prerelease" }
   return $new
 }
 
-$solutionXmlPath = Get-SolutionXmlPath
-[xml]$xml = Get-Content -LiteralPath $solutionXmlPath
-# Typical XPath for version element in Solution.xml
-$versionNode = $xml.SelectSingleNode("//SolutionManifest/Version")
-if (-not $versionNode) { $versionNode = $xml.SelectSingleNode("//Version") }
-if (-not $versionNode) { Fail "Version node not found in Solution.xml ($solutionXmlPath)." }
+# 3) Stage current changes from unpack (without bump yet)
+Info "Staging changes from unpack (git add -A)"
+git add -A
 
-$oldVersion = $versionNode.InnerText.Trim()
-$newVersion = Bump-SemVer -version $oldVersion -bump $VersionBump -prerelease $Prerelease
+# Determine what is staged (before version bump)
+$stagedBefore = (git diff --cached --name-only)
+# Treat any file named Solution.xml (case-insensitive) as version file
+$nonVersionStaged = $stagedBefore | Where-Object { $_.ToLower().Split([IO.Path]::DirectorySeparatorChar)[-1] -ne "solution.xml" }
 
-if ($newVersion -ne $oldVersion) {
-  Info "Bumping version: $oldVersion → $newVersion"
-  $versionNode.InnerText = $newVersion
-  $xml.Save($solutionXmlPath)
+# Decide whether we need to bump version
+$doBump = $false
+if ($VersionBump -ne "none") {
+  # caller explicitly asked for bump
+  $doBump = $true
+} elseif ($nonVersionStaged) {
+  # there are real changes; keep VersionBump=none → no bump
+  $doBump = $false
 } else {
-  Info "Version unchanged ($oldVersion)."
+  # no real changes and no bump requested → we will exit with no commit
+  $doBump = $false
+}
+
+# If bump requested, bump Solution.xml now
+$newVersion = $null
+if ($doBump) {
+  $solutionXmlPath = Get-SolutionXmlPath
+  [xml]$xml = Get-Content -LiteralPath $solutionXmlPath
+  $versionNode = $xml.SelectSingleNode("//SolutionManifest/Version")
+  if (-not $versionNode) { $versionNode = $xml.SelectSingleNode("//Version") }
+  if (-not $versionNode) { Fail "Version node not found in Solution.xml ($solutionXmlPath)." }
+
+  $oldVersion = $versionNode.InnerText.Trim()
+  $newVersion = Bump-SemVer -version $oldVersion -bump $VersionBump -prerelease $Prerelease
+
+  if ($newVersion -ne $oldVersion) {
+    Info "Bumping version: $oldVersion → $newVersion"
+    $versionNode.InnerText = $newVersion
+    $xml.Save($solutionXmlPath)
+    git add -A   # stage bumped Solution.xml
+  } else {
+    Info "Version unchanged ($oldVersion)."
+  }
 }
 
 # 4) Remove temporary zip
 if (Test-Path $zipPath) { Remove-Item $zipPath -Force; Info "Removed solution.zip" }
 
-# 5) Stage changes
-Info "Staging all changes (git add -A)"
-git add -A
-
-# If nothing changed, exit gracefully
+# 5) Final staged set after optional bump
 $staged = (git diff --cached --name-only)
-if (-not $staged) { Ok "No changes detected. Nothing to commit or push."; exit 0 }
+if (-not $staged) {
+  Ok "No changes detected. Nothing to commit or push."
+  exit 0
+}
 
 # 6) Commit
 $ts = Get-Date -Format "yyyy-MM-dd HH:mm"
-$commitMsg = "$Message (version: $newVersion, $ts)"
+$verText = $(if ($newVersion) { " (version: $newVersion, $ts)" } else { " ($ts)" })
+$commitMsg = "$Message$verText"
 Info "Committing: $commitMsg"
 git commit -m $commitMsg
 
@@ -131,11 +170,11 @@ Info "Pushing to remote..."
 git push
 
 # 8) Optional git tag (vX.Y.Z[-pre])
-if ($Tag) {
+if ($Tag -and $newVersion) {
   $tagName = "v$($newVersion)"
   Info "Creating git tag $tagName"
   git tag -a $tagName -m "Release $tagName"
   git push --tags
 }
 
-Ok "Done. Solution updated (version $newVersion) and pushed."
+Ok "Done. Solution updated and pushed."
