@@ -60,8 +60,16 @@ if ($EnvUrl) {
 $null = & pac org who 2>$null
 if ($LASTEXITCODE -ne 0) { Fail "No active PAC auth. Run: pac auth create --environment <url> --deviceCode" }
 
+# Paths
+$root     = Get-Location
+$zipPath  = Join-Path $root "solution.zip"
+$srcPath  = Join-Path $root "src"
+$tmpPath  = Join-Path $root ".tmp_unpacked"
+
+# Clean temp
+if (Test-Path $tmpPath) { Remove-Item $tmpPath -Recurse -Force }
+
 # 1) Export solution
-$zipPath = Join-Path (Get-Location) "solution.zip"
 Info "Exporting solution '$SolutionName' (managed: $($Managed.IsPresent)) -> $zipPath"
 if ($Managed) {
   pac solution export --name $SolutionName --managed --path $zipPath
@@ -69,14 +77,14 @@ if ($Managed) {
   pac solution export --name $SolutionName --path $zipPath
 }
 
-# 2) Unpack
-$srcPath = Join-Path (Get-Location) "src"
-Info "Unpacking solution -> $srcPath"
-pac solution unpack --zipFile $zipPath --folder $srcPath --allowDelete true
+# 2) Unpack to TMP first (NOT to src)
+Info "Unpacking solution -> $tmpPath"
+New-Item -ItemType Directory -Force -Path $tmpPath | Out-Null
+pac solution unpack --zipFile $zipPath --folder $tmpPath --allowDelete true
 
 # Helpers
-function Get-SolutionXmlPath {
-  $candidates = Get-ChildItem -Path $srcPath -Filter "Solution.xml" -Recurse -File -ErrorAction SilentlyContinue
+function Get-SolutionXmlPath([string]$baseFolder) {
+  $candidates = Get-ChildItem -Path $baseFolder -Filter "Solution.xml" -Recurse -File -ErrorAction SilentlyContinue
   if ($candidates.Count -eq 0) { Fail "Solution.xml not found after unpack." }
   return ($candidates | Select-Object -First 1).FullName
 }
@@ -84,91 +92,97 @@ function Bump-SemVer {
   param([string]$version, [string]$bump, [string]$prerelease)
   $base = $version.Split("-")[0]
   $parts = $base.Split(".")
-
-  [int]$maj = $parts[0]
-  [int]$min = $parts[1]
-  [int]$pat = $parts[2]
-
+  [int]$maj = $parts[0]; [int]$min = $parts[1]; [int]$pat = $parts[2]
   switch ($bump) {
     "major" { $maj++; $min=0; $pat=0 }
     "minor" { $min++; $pat=0 }
     "patch" { $pat++ }
     default { }
   }
-
   $new = "$maj.$min.$pat"
   if ($prerelease) { $new = "$new-$prerelease" }
   return $new
 }
 
-# Read version (used in commit message even if not bumped)
-$solutionXmlPath = Get-SolutionXmlPath
-[xml]$xml = Get-Content -LiteralPath $solutionXmlPath
+# Read version from TMP (aktualny eksport)
+$tmpSolutionXml = Get-SolutionXmlPath $tmpPath
+[xml]$tmpXml = Get-Content -LiteralPath $tmpSolutionXml
+$tmpVersionNode = $tmpXml.SelectSingleNode("//SolutionManifest/Version")
+if (-not $tmpVersionNode) { $tmpVersionNode = $tmpXml.SelectSingleNode("//Version") }
+if (-not $tmpVersionNode) { Fail "Version node not found in TMP Solution.xml ($tmpSolutionXml)." }
+$exportedVersion = $tmpVersionNode.InnerText.Trim()
 
-# PS 5.1-compatible fallback instead of '??'
-$versionNode = $xml.SelectSingleNode("//SolutionManifest/Version")
-if (-not $versionNode) { $versionNode = $xml.SelectSingleNode("//Version") }
-if (-not $versionNode) { Fail "Version node not found in Solution.xml ($solutionXmlPath)." }
+# ——————————————————————————————————————————————————
+# DIFF: porównaj katalogi TMP vs SRC bez modyfikowania SRC
+# ——————————————————————————————————————————————————
 
-$oldVersion = $versionNode.InnerText.Trim()
-$newVersion = $null
+# Zbierz pełną listę różnic (ścieżki relatywne) – używamy git --no-index
+# jeżeli SRC nie istnieje (pierwszy raz) — traktuj jak różne
+$diffList = @()
+if (Test-Path $srcPath) {
+  $diffList = & git -c core.autocrlf=false -c core.safecrlf=false diff --no-index --name-only -- $srcPath $tmpPath 2>$null
+} else {
+  $diffList = @("**/*") # wymusi wejście w ścieżkę „pierwsze wgranie”
+}
 
-# Noise filters (ignore Canvas bundle noise if they are the only changes)
+# Filtry „szumu” (Canvas itp.) – całe pliki, nie linie
 $NoisePatterns = @(
   '\.msapp$',
   '_BackgroundImageUri$',
-  '_AdditionalUris'
+  '_AdditionalUris$',
+  '_identity\.json$'
 )
 
-# Raw changes (before staging)
-$changesRaw = git status --porcelain | ForEach-Object { $_.Substring(3) } |
-  Where-Object { $_ -and $_.Trim().Length -gt 0 }
-
-$realChanged = @()
-foreach ($p in $changesRaw) {
+# Odfiltruj szum
+$realDiff = @()
+foreach ($f in $diffList) {
+  $rel = $f
+  # Ujednolicenie separatorów
+  $rel = $rel -replace [regex]::Escape((Get-Location).Path), ''
+  $rel = $rel.TrimStart('\','/')
   $isNoise = $false
-  foreach ($pattern in $NoisePatterns) {
-    if ($p -imatch $pattern) { $isNoise = $true; break }
-  }
-  if (-not $isNoise) { $realChanged += $p }
+  foreach ($pat in $NoisePatterns) { if ($rel -imatch $pat) { $isNoise = $true; break } }
+  if (-not $isNoise) { $realDiff += $rel }
 }
 
-# No real changes & no bump -> exit
-if (-not $realChanged -and $VersionBump -eq "none") {
+# JEŚLI NIE MA RÓŻNIC → nie dotykamy SRC, sprzątamy i kończymy
+if (-not $realDiff -or $realDiff.Count -eq 0) {
   if (Test-Path $zipPath) { Remove-Item $zipPath -Force }
-  Ok "No real solution changes (Canvas noise ignored). Nothing committed."
+  if (Test-Path $tmpPath) { Remove-Item $tmpPath -Recurse -Force }
+  Ok "No real differences between src and latest export (noise ignored). Nothing committed."
   exit 0
 }
 
-# Optional bump
+# 3) (Opcjonalnie) bump wersji – na TMP (bo za chwilę TMP wlejemy do SRC)
+$newVersion = $null
 if ($VersionBump -ne "none") {
-  $newVersion = Bump-SemVer -version $oldVersion -bump $VersionBump -prerelease $Prerelease
-  if ($newVersion -ne $oldVersion) {
-    Info "Bumping version: $oldVersion -> $newVersion"
-    $versionNode.InnerText = $newVersion
-    $xml.Save($solutionXmlPath)
-    # Use full path (PS5 doesn't reliably support Resolve-Path -Relative for git add)
-    $realChanged += $solutionXmlPath
+  $newVersion = Bump-SemVer -version $exportedVersion -bump $VersionBump -prerelease $Prerelease
+  if ($newVersion -ne $exportedVersion) {
+    Info "Bumping version: $exportedVersion -> $newVersion"
+    $tmpVersionNode.InnerText = $newVersion
+    $tmpXml.Save($tmpSolutionXml)
+  } else {
+    $newVersion = $exportedVersion
   }
+} else {
+  $newVersion = $exportedVersion
 }
 
-# Cleanup temp zip
-if (Test-Path $zipPath) { Remove-Item $zipPath -Force; Info "Removed temporary solution.zip" }
+# 4) Skoro są różnice – podmień SRC zawartością TMP
+Info "Sync TMP -> SRC"
+# Robocopy jest stabilne na Windows do mirrorowania
+robocopy $tmpPath $srcPath /MIR /NFL /NDL /NJH /NJS | Out-Null
 
-# Stage only real changes
-$toStage = $realChanged | Select-Object -Unique
-if (-not $toStage) {
-  Ok "No commit required after filtering noise & optional bump."
-  exit 0
-}
+# 5) Sprzątanie ZIP & TMP
+if (Test-Path $zipPath) { Remove-Item $zipPath -Force }
+if (Test-Path $tmpPath) { Remove-Item $tmpPath -Recurse -Force }
 
-Info "Staging files..."
-git add -- $toStage
+# 6) Stage + commit
+Info "Staging changed files..."
+git add -A
 
-# Commit (always include version)
 $ts = Get-Date -Format "yyyy-MM-dd HH:mm"
-$commitVersion = $(if ($newVersion) { $newVersion } else { $oldVersion })
-$commitMsg = "$Message (version: $commitVersion, $ts)"
+$commitMsg = "$Message (version: $newVersion, $ts)"
 Info "Committing: $commitMsg"
 git commit -m $commitMsg
 
@@ -182,4 +196,4 @@ if ($Tag -and $newVersion) {
   git push --tags
 }
 
-Ok "Done. Solution exported, unpacked, versioned and pushed."
+Ok "Done. Solution exported, diff-checked, (optionally) versioned and pushed."
