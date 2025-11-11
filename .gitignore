@@ -1,0 +1,34 @@
+# Ignore exported solution zip files
+*.zip
+
+# Ignore Power Apps Canvas app packages (we version unpacked YAML instead)
+*.msapp
+
+# Ignore temporary PAC build output
+bin/
+obj/
+
+# Ignore solution packager temp files
+*.cdsproj.user
+*.cdsproj
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Ignore Backup files
+*.bak
+
+# Ignore logs
+*.log
+
+# VS Code workspace history
+.history/
+
+# Power Apps cache folders (if someone opens .msapp directly)
+*/CanvasApps/*/Thumbs.db
+
+# Ignore Windows-specific clutter
+Thumbs.db
+Desktop.ini
+$Recycle.Bin/
