@@ -1,0 +1,116 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<forms xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <systemform>
+    <formid>{2cb45585-4026-41f1-b5e7-eca1ca542b4e}</formid>
+    <IntroducedVersion>1.0</IntroducedVersion>
+    <FormPresentation>1</FormPresentation>
+    <FormActivationState>1</FormActivationState>
+    <form headerdensity="HighWithControls">
+      <tabs>
+        <tab verticallayout="true" id="{8b87a25a-f304-4415-a118-59bf267474a7}" IsUserDefined="1">
+          <labels>
+            <label description="General" languagecode="1033" />
+          </labels>
+          <columns>
+            <column width="100%">
+              <sections>
+                <section showlabel="false" showbar="false" IsUserDefined="0" id="{5874dac3-8eb8-4eab-800f-03d8b716a8ba}">
+                  <labels>
+                    <label description="General" languagecode="1033" />
+                  </labels>
+                  <rows>
+                    <row>
+                      <cell id="{c3ed6f72-42af-481e-9f5e-d134b889a454}">
+                        <labels>
+                          <label description="Pharmacy Name" languagecode="1033" />
+                        </labels>
+                        <control id="doz_name" classid="{4273EDBD-AC1D-40d3-9FB2-095C621B552D}" datafieldname="doz_name" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{59de84a1-6673-4ab7-9cc4-4b14483430a7}" locklevel="0" colspan="1" rowspan="1">
+                        <labels>
+                          <label description="Street" languagecode="1033" />
+                        </labels>
+                        <control id="doz_street" classid="{4273EDBD-AC1D-40D3-9FB2-095C621B552D}" datafieldname="doz_street" disabled="false" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{4511d65d-0ce0-4766-88db-17636355c9f9}" locklevel="0" colspan="1" rowspan="1">
+                        <labels>
+                          <label description="City" languagecode="1033" />
+                        </labels>
+                        <control id="doz_city" classid="{4273EDBD-AC1D-40D3-9FB2-095C621B552D}" datafieldname="doz_city" disabled="false" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{1efc3ed6-3003-4827-ac74-1abeac662c8b}" locklevel="0" colspan="1" rowspan="1">
+                        <labels>
+                          <label description="Pharmacy Type" languagecode="1033" />
+                        </labels>
+                        <control id="doz_pharmacy_type" classid="{3EF39988-22BB-4F0B-BBBE-64B5A3748AEE}" datafieldname="doz_pharmacy_type" disabled="false" />
+                      </cell>
+                    </row>
+                  </rows>
+                </section>
+              </sections>
+            </column>
+          </columns>
+        </tab>
+      </tabs>
+      <header id="{bab6c547-c5ec-4471-aba7-e4c286b42459}" celllabelposition="Top" columns="111" labelwidth="115" celllabelalignment="Left">
+        <rows>
+          <row>
+            <cell id="{af469ded-2089-49ec-a9c5-e012222cf6fe}" showlabel="false">
+              <labels>
+                <label description="" languagecode="1033" />
+              </labels>
+            </cell>
+            <cell id="{451031f2-7ff8-45fa-a797-ce5e28775e3a}" showlabel="false">
+              <labels>
+                <label description="" languagecode="1033" />
+              </labels>
+            </cell>
+            <cell id="{169a6337-884e-41c1-804d-16ad0f50946d}" showlabel="false">
+              <labels>
+                <label description="" languagecode="1033" />
+              </labels>
+            </cell>
+          </row>
+        </rows>
+      </header>
+      <footer id="{648284b6-b972-426e-b0ee-f137874fa2d0}" celllabelposition="Top" columns="111" labelwidth="115" celllabelalignment="Left">
+        <rows>
+          <row>
+            <cell id="{4fc13eef-ed02-4f94-b409-a304a0986d5a}" showlabel="false">
+              <labels>
+                <label description="" languagecode="1033" />
+              </labels>
+            </cell>
+            <cell id="{33ee8878-9e42-4651-a526-6c2464e7f6d4}" showlabel="false">
+              <labels>
+                <label description="" languagecode="1033" />
+              </labels>
+            </cell>
+            <cell id="{ac3cacc5-d7a2-4f90-a172-577276a91e15}" showlabel="false">
+              <labels>
+                <label description="" languagecode="1033" />
+              </labels>
+            </cell>
+          </row>
+        </rows>
+      </footer>
+      <DisplayConditions Order="0" FallbackForm="true">
+        <Everyone />
+      </DisplayConditions>
+    </form>
+    <IsCustomizable>1</IsCustomizable>
+    <CanBeDeleted>1</CanBeDeleted>
+    <LocalizedNames>
+      <LocalizedName description="Pharmacy" languagecode="1033" />
+    </LocalizedNames>
+    <Descriptions>
+      <Description description="A form for this entity." languagecode="1033" />
+    </Descriptions>
+  </systemform>
+</forms>

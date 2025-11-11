@@ -1,0 +1,174 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<forms xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <systemform>
+    <formid>{1f3ba216-43eb-4f46-ad79-20520ffd3003}</formid>
+    <IntroducedVersion>1.0</IntroducedVersion>
+    <FormPresentation>1</FormPresentation>
+    <FormActivationState>1</FormActivationState>
+    <form headerdensity="HighWithControls" shownavigationbar="false">
+      <tabs>
+        <tab verticallayout="true" id="{af5d2a3b-a342-4e46-9331-1b5d6cc7c9e8}" IsUserDefined="1" name="General">
+          <labels>
+            <label description="General" languagecode="1033" />
+          </labels>
+          <columns>
+            <column width="100%">
+              <sections>
+                <section showlabel="false" showbar="false" IsUserDefined="0" id="{ae37791d-b20e-4c0d-979e-5c3bebf312c6}">
+                  <labels>
+                    <label description="General" languagecode="1033" />
+                  </labels>
+                  <rows>
+                    <row>
+                      <cell locklevel="0" id="{b97d44cb-e87f-4de9-a2de-0ea44f402588}" colspan="1" rowspan="1">
+                        <labels>
+                          <label description="New QV control 1759681985072" languagecode="1033" />
+                        </labels>
+                        <control id="QuickviewControl1759681985072" classid="{5C5600E0-1D6E-4205-A272-BE80DA87FD42}" datafieldname="doz_pharmacy">
+                          <parameters>
+                            <DisplayAsCustomer360Tile>false</DisplayAsCustomer360Tile>
+                            <QuickForms>&lt;QuickFormIds&gt;&lt;QuickFormId entityname="doz_pharmacy"&gt;52c7f72b-468f-469f-a970-4223f3ddc42a&lt;/QuickFormId&gt;&lt;/QuickFormIds&gt;</QuickForms>
+                          </parameters>
+                        </control>
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{a561c8fc-256a-4d5f-a823-efcd44576cac}">
+                        <labels>
+                          <label description="Visit Number" languagecode="1033" />
+                        </labels>
+                        <control id="doz_visit_number" classid="{4273EDBD-AC1D-40d3-9FB2-095C621B552D}" datafieldname="doz_visit_number" disabled="true" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{28798224-7477-4709-8711-7467d2f1e71e}" locklevel="0" colspan="1" rowspan="1">
+                        <labels>
+                          <label description="Pharmacy Type" languagecode="1033" />
+                        </labels>
+                        <control id="doz_pharmacy_type" classid="{3EF39988-22BB-4F0B-BBBE-64B5A3748AEE}" datafieldname="doz_pharmacy_type" disabled="false" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{f7025ff8-7f5b-41e6-9cee-22baf7e81b7e}" locklevel="0" colspan="1" rowspan="1">
+                        <labels>
+                          <label description="Pharmacy" languagecode="1033" />
+                        </labels>
+                        <control id="doz_pharmacy" classid="{270BD3DB-D9AF-4782-9025-509E298DEC0A}" datafieldname="doz_pharmacy" disabled="false" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{1b390b73-3234-49a7-832d-0432f0e5a4f7}" locklevel="0" colspan="1" rowspan="1">
+                        <labels>
+                          <label description="Visit Date" languagecode="1033" />
+                        </labels>
+                        <control id="doz_visit_date" classid="{5B773807-9FB2-42DB-97C3-7A91EFF8ADFF}" datafieldname="doz_visit_date" disabled="false" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{05cfacce-953a-4722-9466-19d58f37f6fe}" locklevel="0" colspan="1" rowspan="1">
+                        <labels>
+                          <label description="Visit Status" languagecode="1033" />
+                        </labels>
+                        <control id="doz_visit_status" classid="{3EF39988-22BB-4F0B-BBBE-64B5A3748AEE}" datafieldname="doz_visit_status" disabled="false" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{2973597a-e4c3-4297-91c8-a300f64c706a}" locklevel="0" colspan="1" rowspan="1">
+                        <labels>
+                          <label description="Visit with Owner" languagecode="1033" />
+                        </labels>
+                        <control id="doz_visit_with_owner" classid="{67FAC785-CD58-4F9F-ABB3-4B7DDC6ED5ED}" datafieldname="doz_visit_with_owner" disabled="false" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{a465e820-9d38-49d9-985b-c620c37a37fa}" locklevel="0" colspan="1" rowspan="4">
+                        <labels>
+                          <label description="Notes" languagecode="1033" />
+                        </labels>
+                        <control id="doz_notes" classid="{E0DECE4B-6FC8-4A8F-A065-082708572369}" datafieldname="doz_notes" disabled="false" />
+                      </cell>
+                    </row>
+                    <row />
+                    <row />
+                    <row />
+                    <row>
+                      <cell id="{060525e5-da8d-4537-a0a8-eebd7b07390e}" visible="false">
+                        <labels>
+                          <label description="Owner" languagecode="1033" />
+                        </labels>
+                        <control id="ownerid" classid="{270BD3DB-D9AF-4782-9025-509E298DEC0A}" datafieldname="ownerid" />
+                      </cell>
+                    </row>
+                  </rows>
+                </section>
+              </sections>
+            </column>
+          </columns>
+        </tab>
+      </tabs>
+      <header id="{1e9c8174-e845-4aa8-859a-88cec4c2811e}" celllabelposition="Top" columns="111" labelwidth="115" celllabelalignment="Left">
+        <rows>
+          <row>
+            <cell id="{b9793c65-734f-4ebf-96f3-bcccfd46d0e4}" showlabel="false">
+              <labels>
+                <label description="" languagecode="1033" />
+              </labels>
+            </cell>
+            <cell id="{93ed35fb-5425-487d-9559-29eedeec1578}" showlabel="false">
+              <labels>
+                <label description="" languagecode="1033" />
+              </labels>
+            </cell>
+            <cell id="{8ec8c630-19a7-4ff2-bef6-9a7fb1fa3ef9}" showlabel="false">
+              <labels>
+                <label description="" languagecode="1033" />
+              </labels>
+            </cell>
+          </row>
+        </rows>
+      </header>
+      <footer id="{26c5ee57-6078-47e2-a90c-63d80463a1c8}" celllabelposition="Top" columns="111" labelwidth="115" celllabelalignment="Left">
+        <rows>
+          <row>
+            <cell id="{e939bbb7-14ed-44e3-afc1-ca2d9ee5c4f0}" showlabel="false">
+              <labels>
+                <label description="" languagecode="1033" />
+              </labels>
+            </cell>
+            <cell id="{5edde6fc-854c-4ab2-9c4f-b72727852059}" showlabel="false">
+              <labels>
+                <label description="" languagecode="1033" />
+              </labels>
+            </cell>
+            <cell id="{e5b8ce97-267a-4282-bbf3-12ba42bb995d}" showlabel="false">
+              <labels>
+                <label description="" languagecode="1033" />
+              </labels>
+            </cell>
+          </row>
+        </rows>
+      </footer>
+      <DisplayConditions Order="0" FallbackForm="true">
+        <Everyone />
+      </DisplayConditions>
+      <formLibraries>
+        <Library name="doz_doz_visit_form" libraryUniqueId="{2335a31c-fdad-4fa2-a14f-125c99fca373}" />
+      </formLibraries>
+      <events>
+        <event name="onload" application="false" active="false">
+          <Handlers>
+            <Handler functionName="dozVisit.onLoad" libraryName="doz_doz_visit_form" handlerUniqueId="{4492e559-8d6f-4cff-b204-4897c3292170}" enabled="true" parameters="" passExecutionContext="true" />
+          </Handlers>
+        </event>
+      </events>
+    </form>
+    <IsCustomizable>1</IsCustomizable>
+    <CanBeDeleted>1</CanBeDeleted>
+    <LocalizedNames>
+      <LocalizedName description="Visits" languagecode="1033" />
+    </LocalizedNames>
+    <Descriptions>
+      <Description description="A form for this entity." languagecode="1033" />
+    </Descriptions>
+  </systemform>
+</forms>

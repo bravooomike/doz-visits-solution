@@ -1,0 +1,44 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<savedqueries xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <savedquery>
+    <IsCustomizable>1</IsCustomizable>
+    <CanBeDeleted>0</CanBeDeleted>
+    <isquickfindquery>1</isquickfindquery>
+    <isprivate>0</isprivate>
+    <isdefault>1</isdefault>
+    <savedqueryid>{033b4ecf-6067-4663-8775-f17bf4d6c8b2}</savedqueryid>
+    <layoutxml>
+      <grid name="resultset" jump="doz_name" select="1" icon="1" preview="1">
+        <row name="result" id="doz_pharmacyid">
+          <cell name="doz_name" width="300" />
+          <cell name="doz_street" width="100" />
+          <cell name="doz_city" width="100" />
+          <cell name="doz_pharmacy_type" width="128" />
+        </row>
+      </grid>
+    </layoutxml>
+    <querytype>4</querytype>
+    <fetchxml>
+      <fetch version="1.0" mapping="logical">
+        <entity name="doz_pharmacy">
+          <attribute name="doz_pharmacyid" />
+          <attribute name="doz_name" />
+          <order attribute="doz_name" descending="false" />
+          <filter type="and">
+            <condition attribute="statecode" operator="eq" value="0" />
+          </filter>
+          <filter type="or" isquickfindfields="1">
+            <condition attribute="doz_name" operator="like" value="{0}" />
+          </filter>
+          <attribute name="doz_city" />
+          <attribute name="doz_street" />
+          <attribute name="doz_pharmacy_type" />
+        </entity>
+      </fetch>
+    </fetchxml>
+    <IntroducedVersion>1.0</IntroducedVersion>
+    <LocalizedNames>
+      <LocalizedName description="Quick Find Active Pharmacies" languagecode="1033" />
+    </LocalizedNames>
+  </savedquery>
+</savedqueries>
