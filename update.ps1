@@ -89,30 +89,38 @@ function Get-SolutionXmlPath([string]$baseFolder) {
   return ($candidates | Select-Object -First 1).FullName
 }
 
-# >>> CHANGED: 4-segment Dataverse versioning (major.minor.build.revision)
+# >>> 4-segment Dataverse versioning (major.minor.build.revision); bump PATCH=last segment
 function Bump-SemVer {
   param([string]$version, [string]$bump, [string]$prerelease)
 
   $base = $version.Split("-")[0]
   $parts = ($base.Split(".") | ForEach-Object { [int]$_ })
-  while ($parts.Count -lt 4) { $parts += 0 }   # pad to 4 segments
+  while ($parts.Count -lt 4) { $parts += 0 }
 
   $maj = $parts[0]; $min = $parts[1]; $bld = $parts[2]; $rev = $parts[3]
-
   switch ($bump) {
     "major" { $maj++; $min=0; $bld=0; $rev=0 }
     "minor" { $min++; $bld=0; $rev=0 }
-    "patch" { $rev++ }                         # increment LAST segment
-    default  { }                               # "none"
+    "patch" { $rev++ }
+    default  { }
   }
-
   $new = "$maj.$min.$bld.$rev"
   if ($prerelease) { $new = "$new-$prerelease" }
   return $new
 }
-# <<< CHANGED
+# <<<
 
-# Read version from TMP (aktualny eksport)
+# Portable relative-path helper (works on Windows PowerShell 5.1 and PowerShell 7+)
+function Get-RelativePath([string]$baseFolder, [string]$fullPath) {
+  $baseAbs = (Resolve-Path $baseFolder).ProviderPath
+  $fullAbs = (Resolve-Path $fullPath).ProviderPath
+  if (-not $baseAbs.EndsWith('\')) { $baseAbs += '\' }
+  $baseUri = [Uri]$baseAbs
+  $fullUri = [Uri]$fullAbs
+  return [Uri]::UnescapeDataString($baseUri.MakeRelativeUri($fullUri).ToString()).Replace('/', '\')
+}
+
+# Read version from TMP (fresh export)
 $tmpSolutionXml = Get-SolutionXmlPath $tmpPath
 [xml]$tmpXml = Get-Content -LiteralPath $tmpSolutionXml
 $tmpVersionNode = $tmpXml.SelectSingleNode("//SolutionManifest/Version")
@@ -120,51 +128,42 @@ if (-not $tmpVersionNode) { $tmpVersionNode = $tmpXml.SelectSingleNode("//Versio
 if (-not $tmpVersionNode) { Fail "Version node not found in TMP Solution.xml ($tmpSolutionXml)." }
 $exportedVersion = $tmpVersionNode.InnerText.Trim()
 
-# ——————————————————————————————————————————————————
-# DIFF: porównaj katalogi TMP vs SRC bez modyfikowania SRC
-# ——————————————————————————————————————————————————
+# --------------------------------------------------------------------
+# ROBUST DIFF: compare file SETS and SHA-256 hashes (noise filtered)
+# --------------------------------------------------------------------
+$noiseRegex = [regex]'(\.msapp$|_BackgroundImageUri$|_AdditionalUris$|_identity\.json$)'
 
-# Zbierz pełną listę różnic (ścieżki relatywne) – używamy git --no-index
-# jeżeli SRC nie istnieje (pierwszy raz) — traktuj jak różne
-$diffList = @()
-if (Test-Path $srcPath) {
-  $diffList = & git -c core.autocrlf=false -c core.safecrlf=false diff --no-index --name-only -- $srcPath $tmpPath 2>$null
-} else {
-  $diffList = @("**/*")
+function Build-FileMap([string]$baseFolder) {
+  if (-not (Test-Path $baseFolder)) { return @{} }
+  $files = Get-ChildItem -Path $baseFolder -File -Recurse -ErrorAction SilentlyContinue |
+           Where-Object { -not $noiseRegex.IsMatch($_.FullName) }
+  $map = @{}
+  foreach ($f in $files) {
+    $rel = Get-RelativePath -baseFolder $baseFolder -fullPath $f.FullName
+    $hash = (Get-FileHash -Path $f.FullName -Algorithm SHA256).Hash
+    $map[$rel] = $hash
+  }
+  return $map
 }
 
-# Filtry „szumu” (Canvas itp.) – całe pliki, nie linie
-$NoisePatterns = @(
-  '\.msapp$',
-  '_BackgroundImageUri$',
-  '_AdditionalUris$',
-  '_identity\.json$'
-)
+$srcMap = Build-FileMap $srcPath
+$tmpMap = Build-FileMap $tmpPath
 
-# Odfiltruj szum
-$realDiff = @()
-foreach ($f in $diffList) {
-  $rel = $f
-  $rel = $rel -replace [regex]::Escape((Get-Location).Path), ''
-  $rel = $rel.TrimStart('\','/')
-  $isNoise = $false
-  foreach ($pat in $NoisePatterns) { if ($rel -imatch $pat) { $isNoise = $true; break } }
-  if (-not $isNoise) { $realDiff += $rel }
-}
+$added   = @($tmpMap.Keys | Where-Object { -not $srcMap.ContainsKey($_) })
+$removed = @($srcMap.Keys | Where-Object { -not $tmpMap.ContainsKey($_) })
+$changed = @($tmpMap.Keys | Where-Object { $srcMap.ContainsKey($_) -and $tmpMap[$_] -ne $srcMap[$_] })
 
-# JEŚLI NIE MA RÓŻNIC → nie dotykamy SRC, sprzątamy i kończymy
-if (-not $realDiff -or $realDiff.Count -eq 0) {
+$hasRealDiff = ($added.Count -or $removed.Count -or $changed.Count)
+
+if (-not $hasRealDiff) {
   if (Test-Path $zipPath) { Remove-Item $zipPath -Force }
   if (Test-Path $tmpPath) { Remove-Item $tmpPath -Recurse -Force }
   Ok "No real differences between src and latest export (noise ignored). Nothing committed."
   exit 0
 }
 
-# 3) Auto/explicit version bump – bumpujemy w TMP (bo za chwilę TMP wlejemy do SRC)
-# Jeśli są realne różnice i nie podano -VersionBump → automatycznie podbij PATCH
-if ($VersionBump -eq "none" -and $realDiff -and $realDiff.Count -gt 0) {
-  $VersionBump = "patch"
-}
+# 3) Auto/explicit version bump – bump in TMP (because TMP will be mirrored to SRC)
+if ($VersionBump -eq "none") { $VersionBump = "patch" }  # auto-bump patch only when real diff exists
 
 $newVersion = $exportedVersion
 if ($VersionBump -ne "none") {
@@ -178,11 +177,11 @@ if ($VersionBump -ne "none") {
   }
 }
 
-# 4) Skoro są różnice – podmień SRC zawartością TMP
+# 4) Mirror TMP -> SRC
 Info "Sync TMP -> SRC"
 robocopy $tmpPath $srcPath /MIR /NFL /NDL /NJH /NJS | Out-Null
 
-# 5) Sprzątanie ZIP & TMP
+# 5) Cleanup
 if (Test-Path $zipPath) { Remove-Item $zipPath -Force }
 if (Test-Path $tmpPath) { Remove-Item $tmpPath -Recurse -Force }
 
@@ -205,4 +204,4 @@ if ($Tag -and $newVersion) {
   git push --tags
 }
 
-Ok "Done. Solution exported, diff-checked, (optionally) versioned and pushed."
+Ok "Done. Solution exported, diff-checked (hash-based), versioned and pushed."
