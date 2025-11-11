@@ -38,12 +38,23 @@ function Fail($m){ Write-Host "❌ $m" -f Red; exit 1 }
 function Info($m){ Write-Host "▶ $m" -f Cyan }
 function Ok($m){   Write-Host "✅ $m" -f Green }
 
+# Ensure we're at repo root
 if (-not (Test-Path ".git")) { Fail "Run this script from the root of your Git repo." }
+
+# PAC CLI available?
 try { pac --help | Out-Null } catch { Fail "PAC CLI not found in PATH." }
-if ((pac auth list | Out-String) -notmatch "\[Active\]") {
+
+# Optional environment switch (creates/activates a profile)
+if ($EnvUrl) {
+  Info "Switching PAC to $EnvUrl"
+  pac auth create --environment $EnvUrl --deviceCode | Out-Null
+}
+
+# Check active PAC auth robustly (language-agnostic)
+$null = & pac org who 2>$null
+if ($LASTEXITCODE -ne 0) {
   Fail "No active PAC auth. Run: pac auth create --environment <url> --deviceCode"
 }
-if ($EnvUrl) { Info "Switching PAC to $EnvUrl"; pac auth create --environment $EnvUrl --deviceCode | Out-Null }
 
 # 1) Export solution
 $zipPath = Join-Path (Get-Location) "solution.zip"
@@ -60,7 +71,6 @@ pac solution unpack --zipFile $zipPath --folder $srcPath --allowDelete true
 function Get-SolutionXmlPath {
   $candidates = Get-ChildItem -Path $srcPath -Filter "Solution.xml" -Recurse -File -ErrorAction SilentlyContinue
   if ($candidates.Count -eq 0) { Fail "Solution.xml not found under $srcPath. Unpack result unexpected." }
-  # Usually there's exactly one; take the first deterministic path
   return ($candidates | Sort-Object FullName | Select-Object -First 1).FullName
 }
 
