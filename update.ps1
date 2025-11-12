@@ -62,9 +62,12 @@ if ($LASTEXITCODE -ne 0) { Fail "No active PAC auth. Run: pac auth create --envi
 
 # Paths
 $root     = Get-Location
-$zipPath  = Join-Path $root "solution.zip"
 $srcPath  = Join-Path $root "src"
-$tmpPath  = Join-Path $root ".tmp_unpacked"
+
+# Artefakty poza repo – w katalogu systemowym TEMP
+$sysTmp   = [IO.Path]::GetTempPath()
+$zipPath  = Join-Path $sysTmp ("doz_visits_solution_{0}.zip" -f $PID)
+$tmpPath  = Join-Path $sysTmp ("doz_visits_unpacked_{0}"   -f $PID)
 
 # --- ALWAYS-CLEANUP FLAGS ---
 $__cleanup_zip = $false
@@ -96,10 +99,14 @@ try {
     return ($candidates | Select-Object -First 1).FullName
   }
 
-  # >>> 4-segment Dataverse versioning (major.minor.build.revision); bump PATCH=last segment
+  # 4-segment Dataverse versioning (major.minor.build.revision); PATCH = ostatni segment
   function Bump-SemVer {
-    param([string]$version, [string]$bump, [string]$prerelease)
-    $base = $version.Split("-")[0]
+    param(
+      [string]$version,
+      [string]$bump,
+      [string]$prerelease
+    )
+    $base  = $version.Split("-")[0]
     $parts = ($base.Split(".") | ForEach-Object { [int]$_ })
     while ($parts.Count -lt 4) { $parts += 0 }
     $maj = $parts[0]; $min = $parts[1]; $bld = $parts[2]; $rev = $parts[3]
@@ -113,9 +120,8 @@ try {
     if ($prerelease) { $new = "$new-$prerelease" }
     return $new
   }
-  # <<<
 
-  # Portable relative-path helper
+  # Portable relative-path helper (PS 5.1/7+)
   function Get-RelativePath([string]$baseFolder, [string]$fullPath) {
     $baseAbs = (Resolve-Path $baseFolder).ProviderPath
     $fullAbs = (Resolve-Path $fullPath).ProviderPath
@@ -144,7 +150,7 @@ try {
              Where-Object { -not $noiseRegex.IsMatch($_.FullName) }
     $map = @{}
     foreach ($f in $files) {
-      $rel = Get-RelativePath -baseFolder $baseFolder -fullPath $f.FullName
+      $rel  = Get-RelativePath -baseFolder $baseFolder -fullPath $f.FullName
       $hash = (Get-FileHash -Path $f.FullName -Algorithm SHA256).Hash
       $map[$rel] = $hash
     }
@@ -208,11 +214,7 @@ try {
   Ok "Done. Solution exported, diff-checked (hash-based), versioned and pushed."
 }
 finally {
-  # --- ALWAYS CLEANUP ---
-  if ($__cleanup_zip -and (Test-Path $zipPath)) {
-    try { Remove-Item $zipPath -Force } catch {}
-  }
-  if ($__cleanup_tmp -and (Test-Path $tmpPath)) {
-    try { Remove-Item $tmpPath -Recurse -Force } catch {}
-  }
+  # --- ALWAYS CLEANUP (nawet po błędzie) ---
+  if ((Test-Path $zipPath)) { try { Remove-Item $zipPath -Force } catch {} }
+  if ((Test-Path $tmpPath)) { try { Remove-Item $tmpPath -Recurse -Force } catch {} }
 }
