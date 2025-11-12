@@ -1,0 +1,41 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<savedqueries xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <savedquery>
+    <IsCustomizable>1</IsCustomizable>
+    <CanBeDeleted>0</CanBeDeleted>
+    <isquickfindquery>0</isquickfindquery>
+    <isprivate>0</isprivate>
+    <isdefault>1</isdefault>
+    <savedqueryid>{c5319a3f-119f-43d7-8248-90f8e6294301}</savedqueryid>
+    <layoutxml>
+      <grid name="resultset" jump="doz_name" select="1" icon="1" preview="1">
+        <row name="result" id="doz_pharmacyid">
+          <cell name="doz_name" width="300" />
+          <cell name="doz_street" width="100" />
+          <cell name="doz_city" width="100" />
+          <cell name="doz_pharmacy_type" width="128" />
+        </row>
+      </grid>
+    </layoutxml>
+    <querytype>0</querytype>
+    <fetchxml>
+      <fetch version="1.0" mapping="logical">
+        <entity name="doz_pharmacy">
+          <attribute name="doz_pharmacyid" />
+          <attribute name="doz_name" />
+          <order attribute="doz_name" descending="false" />
+          <filter type="and">
+            <condition attribute="statecode" operator="eq" value="0" />
+          </filter>
+          <attribute name="doz_street" />
+          <attribute name="doz_city" />
+          <attribute name="doz_pharmacy_type" />
+        </entity>
+      </fetch>
+    </fetchxml>
+    <IntroducedVersion>1.0</IntroducedVersion>
+    <LocalizedNames>
+      <LocalizedName description="Pharmacies" languagecode="1033" />
+    </LocalizedNames>
+  </savedquery>
+</savedqueries>

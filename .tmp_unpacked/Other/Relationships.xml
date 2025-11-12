@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<EntityRelationships xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <EntityRelationship Name="business_unit_doz_visit" />
+  <EntityRelationship Name="doz_visit_pharmacy" />
+  <EntityRelationship Name="lk_doz_pharmacy_createdby" />
+  <EntityRelationship Name="lk_doz_pharmacy_modifiedby" />
+  <EntityRelationship Name="lk_doz_visit_createdby" />
+  <EntityRelationship Name="lk_doz_visit_modifiedby" />
+  <EntityRelationship Name="organization_doz_pharmacy" />
+  <EntityRelationship Name="owner_doz_visit" />
+  <EntityRelationship Name="team_doz_visit" />
+  <EntityRelationship Name="user_doz_visit" />
+</EntityRelationships>

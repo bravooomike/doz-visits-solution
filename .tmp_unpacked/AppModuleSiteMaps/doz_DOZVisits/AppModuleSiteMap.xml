@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<AppModuleSiteMap xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <SiteMapUniqueName>doz_DOZVisits</SiteMapUniqueName>
+  <EnableCollapsibleGroups>False</EnableCollapsibleGroups>
+  <ShowHome>True</ShowHome>
+  <ShowPinned>True</ShowPinned>
+  <ShowRecents>True</ShowRecents>
+  <SiteMap IntroducedVersion="7.0.0.0">
+    <Area Id="area_e9c061aa" ResourceId="SitemapDesigner.NewTitle" DescriptionResourceId="SitemapDesigner.NewTitle" ShowGroups="true" IntroducedVersion="7.0.0.0">
+      <Titles>
+        <Title LCID="1033" Title="Area1" />
+      </Titles>
+      <Group Id="group_62c5f6b0" ResourceId="SitemapDesigner.NewGroup" DescriptionResourceId="SitemapDesigner.NewGroup" IntroducedVersion="7.0.0.0" IsProfile="false" ToolTipResourseId="SitemapDesigner.Unknown">
+        <SubArea Id="subarea_754bda2b" VectorIcon="/WebResources/mspp_ad_placement.svg" Icon="/WebResources/mspp_ad_placement.svg" Entity="doz_pharmacy" Client="All,Outlook,OutlookLaptopClient,OutlookWorkstationClient,Web" AvailableOffline="true" PassParams="false" Sku="All,OnPremise,Live,SPLA" />
+        <SubArea Id="subarea_72c82d61" VectorIcon="/WebResources/mspp_entity_forms.svg" Icon="/WebResources/mspp_entity_forms.svg" Entity="doz_visit" Client="All,Outlook,OutlookLaptopClient,OutlookWorkstationClient,Web" AvailableOffline="true" PassParams="false" Sku="All,OnPremise,Live,SPLA" />
+      </Group>
+    </Area>
+  </SiteMap>
+  <LocalizedNames>
+    <LocalizedName description="DOZ Visits" languagecode="1033" />
+  </LocalizedNames>
+</AppModuleSiteMap>
