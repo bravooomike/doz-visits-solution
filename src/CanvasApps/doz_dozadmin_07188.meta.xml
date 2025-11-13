@@ -1,11 +1,11 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <CanvasApp xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <Name>doz_dozadmin_07188</Name>
-  <AppVersion>2025-11-12T17:49:33Z</AppVersion>
+  <AppVersion>2025-11-13T09:31:56Z</AppVersion>
   <Status>Ready</Status>
-  <CreatedByClientVersion>3.25103.13.0</CreatedByClientVersion>
-  <MinClientVersion>3.25103.13.0</MinClientVersion>
-  <Tags>{"primaryDeviceWidth":"1366","primaryDeviceHeight":"768","supportsPortrait":"true","supportsLandscape":"true","primaryFormFactor":"Tablet","showStatusBar":"false","publisherVersion":"3.25103.13","minimumRequiredApiVersion":"2.2.0","hasComponent":"false","hasUnlockedComponent":"false","isUnifiedRootApp":"false","sienaVersion":"20251112T162852Z-3.25103.13.0"}</Tags>
+  <CreatedByClientVersion>3.25111.6.0</CreatedByClientVersion>
+  <MinClientVersion>3.25111.6.0</MinClientVersion>
+  <Tags>{"primaryDeviceWidth":"1366","primaryDeviceHeight":"768","supportsPortrait":"true","supportsLandscape":"true","primaryFormFactor":"Tablet","showStatusBar":"false","publisherVersion":"3.25111.6","minimumRequiredApiVersion":"2.2.0","hasComponent":"false","hasUnlockedComponent":"false","isUnifiedRootApp":"false","sienaVersion":"20251112T174933Z-3.25103.13.0"}</Tags>
   <IsCdsUpgraded>0</IsCdsUpgraded>
   <GalleryItemId xsi:nil="true"></GalleryItemId>
   <BackgroundColor>RGBA(0,176,240,1)</BackgroundColor>
